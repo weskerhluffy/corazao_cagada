@@ -1,3 +1,4 @@
+#!/Users/ernesto/programas/homebrew/bin/python2
 '''
 Created on 18/10/2017
 
@@ -9,7 +10,7 @@ from Queue import Queue
 
 
 nivel_log = logging.ERROR
-#nivel_log = logging.DEBUG
+# nivel_log = logging.DEBUG
 logger_cagada = None
 
 class caca():
@@ -28,7 +29,7 @@ class caca():
         if(self.tropas_comunes < self.kk):
             self.defendible = False
 
-def korazao_cagada_bfs(nodo_inicial, ya_vistos):
+def korazao_cagada_bfs(nodo_inicial, ya_vistos, kk):
     ya_vistos_inicial = len(ya_vistos)
     
     cacaq = []
@@ -39,28 +40,36 @@ def korazao_cagada_bfs(nodo_inicial, ya_vistos):
     
     while(cacaq):
         nodo_act = cacaq.pop()
+        tot_tropas = nodo_act.tropas
         num_tropas += nodo_act.tropas
         logger_cagada.debug("tropas act {} en ciudad {}".format(num_tropas, nodo_act))
         for mierda in nodo_act.vecinos:
-            if mierda.defendible and mierda not in ya_vistos:
-                cacaq.append(mierda)
-                ya_vistos.add(mierda)
+            if mierda.defendible:
+                tot_tropas += mierda.tropas
+                if mierda not in ya_vistos:
+                    cacaq.append(mierda)
+                    ya_vistos.add(mierda)
+        if nodo_act.defendible:
+            assert tot_tropas == nodo_act.tropas_comunes
+            assert tot_tropas >= kk
     
     ya_vistos_final = len(ya_vistos)
     return ya_vistos_final - ya_vistos_inicial, num_tropas
 
-def korazao_cagada_core(ciudades):
+def korazao_cagada_core(ciudades, kk):
     ya_vistos = set()
     max_tropas = 0
     max_ciudades = 0
     
     for idx, ciudad in enumerate(ciudades):
+        if ciudad.defendible:
+            assert ciudad.tropas_comunes >= kk
         if(ciudad not in ya_vistos and ciudad.defendible):
-            num_ciudades, num_tropas = korazao_cagada_bfs(ciudad, ya_vistos)
+            num_ciudades, num_tropas = korazao_cagada_bfs(ciudad, ya_vistos, kk)
             # TODO: Solo ai un korazao?
-            if(max_ciudades < num_ciudades):
-                max_tropas = num_tropas
-                max_ciudades = num_ciudades
+            assert max_ciudades != num_ciudades
+            max_tropas += num_tropas
+            max_ciudades += num_ciudades
             logger_cagada.debug("para ciudad {}:{} el unm_ciudades {} el d ttrompas {}".format(idx, ciudad, num_ciudades, num_tropas))
     return max_ciudades, max_tropas
 
@@ -109,7 +118,7 @@ def korazao_cagada_main():
         korazao_cagada_calcula_defendibles(ciudades, kk)
         logger_cagada.debug("despues de masajearlas {}".format(ciudades))
         
-        ass, fuck = korazao_cagada_core(ciudades)
+        ass, fuck = korazao_cagada_core(ciudades, kk)
         logger_cagada.debug("ciudades {} trompas {}".format(ass, fuck))
         print("{} {}".format(ass, fuck))
         
